@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tb-db-setup
+  namespace: thingsboard
+spec:
+  volumes:
+  - name: tb-node-config
+    configMap:
+      name: tb-node-config
+      items:
+      - key: conf
+        path: thingsboard.conf
+      - key: logback
+        path: logback.xml
+  - name: tb-node-logs
+    emptyDir: {}
+  containers:
+  - name: tb-db-setup
+    imagePullPolicy: Always
+    image: thingsboard/tb-node:3.9.0
+    env:
+      - name: TB_SERVICE_ID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+      - name: ZOOKEEPER_ENABLED
+        value: "true"
+      - name: ZOOKEEPER_URL
+        value: "zookeeper:2181"
+    envFrom:
+    - configMapRef:
+        name: tb-node-db-config
+    - configMapRef:
+        name: tb-cache-config
+    - configMapRef:
+        name: tb-kafka-config
+    volumeMounts:
+      - mountPath: /config
+        name: tb-node-config
+      - mountPath: /var/log/thingsboard
+        name: tb-node-logs
+    command: ['sh', '-c', 'while [ ! -f /tmp/install-finished ]; do sleep 2; done;']
+  restartPolicy: Never

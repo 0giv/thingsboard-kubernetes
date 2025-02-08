@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: tb-node
+  namespace: thingsboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tb-node
+  template:
+    metadata:
+      labels:
+        app: tb-node
+    spec:
+      volumes:
+        - name: tb-node-config
+          configMap:
+            name: tb-node-config
+            items:
+            - key: conf
+              path: thingsboard.conf
+            - key: logback
+              path: logback.xml
+        - name: tb-node-logs
+          emptyDir: {}
+      containers:
+      - name: server
+        imagePullPolicy: Always
+        image: thingsboard/tb-node:3.9.0
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: rpc
+        env:
+        - name: TB_SERVICE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: TB_SERVICE_TYPE
+          value: "monolith"
+        - name: ZOOKEEPER_ENABLED
+          value: "true"
+        - name: ZOOKEEPER_URL
+          value: "tb-kafka-zookeeper.thingsboard.svc.cluster.local:2181"
+        - name: JS_EVALUATOR
+          value: "remote"
+        - name: HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE
+          value: "false"
+        envFrom:
+        - configMapRef:
+            name: tb-node-db-config
+        - configMapRef:
+            name: tb-cache-config
+        - configMapRef:
+            name: tb-kafka-config
+        volumeMounts:
+          - mountPath: /config
+            name: tb-node-config
+          - mountPath: /var/log/thingsboard
+            name: tb-node-logs
+        readinessProbe:
+          httpGet:
+            path: /login
+            port: http
+          initialDelaySeconds: 360
+          timeoutSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /login
+            port: http
+          initialDelaySeconds: 360
+          timeoutSeconds: 10
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tb-node
+  namespace: thingsboard
+spec:
+  type: ClusterIP
+  selector:
+    app: tb-node
+  ports:
+  - port: 8080
+    name: http

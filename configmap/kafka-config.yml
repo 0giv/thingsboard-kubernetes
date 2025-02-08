@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log4j.properties
+  namespace: thingsboard
+data:
+  start-node.sh: |
+    #!/bin/sh
+    cp /tmp/tools-log4j.properties /opt/kafka/config/tools-log4j.properties
+    cp /tmp/log4j.properties /opt/kafka/config/log4j.properties
+    /usr/bin/start-kafka.sh
+  tools-log4j.properties: |+
+    log4j.rootLogger=WARN, stdout
+    log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+    log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+    log4j.appender.stdout.layout.ConversionPattern=[%d] %p %m (%c)%n
+  log4j.properties: |+
+    log4j.rootLogger=INFO, stdout
+
+    log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+    log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+    log4j.appender.stdout.layout.ConversionPattern=[%d] %p %m (%c)%n
+
+    # Change the line below to adjust ZK client logging
+    log4j.logger.org.apache.zookeeper=INFO
+
+    # Change the two lines below to adjust the general broker logging level (output to server.log and stdout)
+    log4j.logger.kafka=INFO
+    log4j.logger.org.apache.kafka=INFO
+
+    # Change to DEBUG or TRACE to enable request logging
+    log4j.logger.kafka.request.logger=WARN, stdout
+    log4j.additivity.kafka.request.logger=false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tb-kafka-config
+  namespace: thingsboard
+  labels:
+    name: tb-kafka-config
+data:
+  TB_QUEUE_TYPE: kafka
+  TB_KAFKA_SERVERS: tb-kafka-broker-headless.thingsboard.svc.cluster.local:9094
+

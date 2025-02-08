@@ -1,0 +1,97 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tb-ingress
+  namespace: thingsboard
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /api/v1/.*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-http-transport
+                port:
+                  number: 8080
+          - path: /api/.*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-node
+                port:
+                  number: 8080
+          - path: /swagger.*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-node
+                port:
+                  number: 8080
+          - path: /webjars.*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-node
+                port:
+                  number: 8080
+          - path: /v2/.*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-node
+                port:
+                  number: 8080
+          - path: /v3/.*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-node
+                port:
+                  number: 8080
+          - path: /static/rulenode/.*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-node
+                port:
+                  number: 8080
+          - path: /assets/help/.*/rulenode/.*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-node
+                port:
+                  number: 8080
+          - path: /oauth2/.*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-node
+                port:
+                  number: 8080
+          - path: /login/oauth2/.*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-node
+                port:
+                  number: 8080
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-web-ui
+                port:
+                  number: 8080
+          - path: /.*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tb-web-ui
+                port:
+                  number: 8080
